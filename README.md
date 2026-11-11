@@ -1,16 +1,40 @@
-# React + Vite
+# Webhost E2E Test
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A minimal static website for validating the Webhost deployment pipeline.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 20 or later
+- npm
 
-## React Compiler
+## Build locally
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```powershell
+npm install
+npm run build
+Test-Path dist/index.html
+```
 
-## Expanding the ESLint configuration
+The final command should return `True`. The build copies `public/` into `dist/`, which is the deployment output directory expected by this test.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Deploy
+
+Push this repository to a public GitHub repository, then submit its HTTPS clone URL to the Webhost API:
+
+```powershell
+$KEY = "dev-token-change-me-0123456789"
+$body = @{
+    repoUrl = "https://github.com/YOUR_USERNAME/webhost-e2e-test"
+} | ConvertTo-Json
+
+$response = Invoke-RestMethod `
+    -Uri "http://localhost:3000/v1/deployments" `
+    -Method Post `
+    -Headers @{ Authorization = "Bearer $KEY" } `
+    -ContentType "application/json" `
+    -Body $body
+
+$response | ConvertTo-Json -Depth 10
+```
+
+Use the deployment ID returned by the API to inspect its status and logs.
